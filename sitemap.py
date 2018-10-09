@@ -41,16 +41,7 @@ def parsing_url(parse_html,conf,url_list):
 
 
 def get_cof():
-    targetXML = open("conf.xml",'r')
-
-    tree = parse(targetXML)
-
-    root = tree.getroot()
-    conf = {}
-    for i in root.findall('property'):
-        name = i.findtext('name')
-        value = i.findtext('value')
-        conf[name] = value
+    conf = pd.read_json('conf.json', typ='series')
 
     return conf
 
