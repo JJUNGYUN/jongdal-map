@@ -12,7 +12,7 @@ import sys
 
 class jongdal:
     def __init__(self, depth):
-        self.depth = depth
+        self.depth = int(depth)
         self.conf = self.get_cof()
         self.make_dict()
         self.inject_url()
@@ -70,7 +70,9 @@ class jongdal:
             try:
                 for seed in self.domain_list:
                     if(i['href'][0] == '/' and seed in parse_url and (seed+i['href'][1:] not in self.url_list[seed]['documents'])):
-                        parse_list.append(seed+i['href'][1:])
+                        for apend in self.full_domain_url_list:
+                            if seed in apend:
+                                parse_list.append(apend+i['href'][1:])
                         #self.url_list[seed]['documents'].append(seed+i['href'][1:])
                         #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
                     if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
@@ -103,13 +105,17 @@ class jongdal:
         '''
         self.url_list = {}
         for i in self.get_seed():
-            self.url_list[re.sub('\n|\t|\r','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.depth,'documents':[re.sub('\n','',i)]}
+            self.url_list[re.sub('\n|\t|\r|https://|www.|http://','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.depth,'documents':[re.sub('\n','',i)]}
 
     def get_domain(self):
         '''
         seed에입력된 사이트에 해당되는 사이트만을 거르기위해 실행됩니다.
         '''
         self.domain_list = list(self.url_list.keys())
+        self.full_domain_url_list = []
+        for i in self.domain_list:
+            self.full_domain_url_list.append(self.url_list[i]['url'])
+        print(self.full_domain_url_list)
 
     def inject_url(self):
         '''
@@ -121,10 +127,6 @@ class jongdal:
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print('python sitemap.py [depth]')
-    print(sys.argv[1])
-    try:
-        depth  = int(sys.argv[1])
-        jongdal(depth=2)
-    except Exception as e:
-        print(e)
-        print("Depth is integer.")
+    depth  = int(sys.argv[1])
+    jongdal(depth=sys.argv[1])
+
