@@ -66,6 +66,7 @@ class jongdal:
 
                 # self.parsing_url(parsing_url_html,i)
         except Exception as e:
+            print(e)
     def parsing_url(self,parse_url):
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
@@ -80,8 +81,7 @@ class jongdal:
                             for apend in self.full_domain_url_list:
                                 if seed in apend:
                                     parse_list.append(apend+i['href'][1:])
-                            #self.url_list[seed]['
-            print(e)documents'].append(seed+i['href'][1:])
+                            #self.url_list[seed]['documents'].append(seed+i['href'][1:])
                             #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
                         if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
                             parse_list.append(i['href'])
