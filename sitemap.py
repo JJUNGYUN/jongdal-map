@@ -50,8 +50,14 @@ class jongdal:
         self.inject_url()
 
     def connect_url(self,url):
+        hdr = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3', 'Accept-Encoding': 'none',
+            'Accept-Language': 'en-US,en;q=0.8', 'Connection': 'keep-alive'}
+
         try:
-            with urllib.request.urlopen(url) as response:
+            with urllib.request.urlopen(url,headers =hdr) as response:
                 html = response.read()
                 soup = BeautifulSoup(html, 'html.parser')
                 parsing_url_html = soup.find_all()
