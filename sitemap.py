@@ -8,15 +8,16 @@ import datetime
 from xml.etree.ElementTree import parse
 import multiprocessing
 import time
+import sys
 
 class jongdal:
-    def __init__(self):
+    def __init__(self, depth):
+        self.depth = depth
         self.conf = self.get_cof()
         self.make_dict()
         self.inject_url()
-
         self.get_domain()
-        for i in range(2):
+        for i in range(self.depth):
             self.make_url_list()
             self.url_parser()
 
@@ -102,7 +103,7 @@ class jongdal:
         '''
         self.url_list = {}
         for i in self.get_seed():
-            self.url_list[re.sub('\n|\t|\r','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'documents':[re.sub('\n','',i)]}
+            self.url_list[re.sub('\n|\t|\r','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.depth,'documents':[re.sub('\n','',i)]}
 
     def get_domain(self):
         '''
@@ -118,4 +119,12 @@ class jongdal:
             json.dump(self.url_list, make_file, ensure_ascii=False, indent="\t")
 
 if __name__ == '__main__':
-    jongdal()
+    if len(sys.argv) != 2:
+        print('python sitemap.py [depth]')
+    print(sys.argv[1])
+    try:
+        depth  = int(sys.argv[1])
+        jongdal(depth=2)
+    except Exception as e:
+        print(e)
+        print("Depth is integer.")
