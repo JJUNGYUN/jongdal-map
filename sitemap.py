@@ -36,7 +36,7 @@ class jongdal:
         들어간 url을 bs4를 이용하여 html을 파싱합니다
         :return:
         '''
-        pool = multiprocessing.Pool(processes=100)
+        pool = multiprocessing.Pool(processes=15)
         url_list = pool.map(self.parsing_url, self.parse_url_list)
         pool.close()
         pool.join()
@@ -66,7 +66,6 @@ class jongdal:
 
                 # self.parsing_url(parsing_url_html,i)
         except Exception as e:
-            print(e)
     def parsing_url(self,parse_url):
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
@@ -77,11 +76,12 @@ class jongdal:
             for i in self.connect_url(parse_url):
                 try:
                     for seed in self.domain_list:
-                        if(i['href'][0] == '/' and seed in parse_url and (seed+i['href'][1:] not in self.url_list[seed]['documents'])):
+                        if(i['href'][0] == '/' and seed in parse_url ):
                             for apend in self.full_domain_url_list:
                                 if seed in apend:
                                     parse_list.append(apend+i['href'][1:])
-                            #self.url_list[seed]['documents'].append(seed+i['href'][1:])
+                            #self.url_list[seed]['
+            print(e)documents'].append(seed+i['href'][1:])
                             #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
                         if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
                             parse_list.append(i['href'])
