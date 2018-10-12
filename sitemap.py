@@ -6,15 +6,19 @@ import json
 import re
 import datetime
 from xml.etree.ElementTree import parse
+import multiprocessing
+import time
 
 class jongdal:
     def __init__(self):
         self.conf = self.get_cof()
         self.make_dict()
         self.inject_url()
+
         self.get_domain()
-        self.make_url_list()
-        self.url_parser()
+        for i in range(2):
+            self.make_url_list()
+            self.url_parser()
 
     def make_url_list(self):
         '''
@@ -31,31 +35,52 @@ class jongdal:
         들어간 url을 bs4를 이용하여 html을 파싱합니다
         :return:
         '''
-        for i in self.parse_url_list:
-            print("crawl start" ,i)
-            try:
-                with urllib.request.urlopen(i) as response:
-                    html = response.read()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    parse_url = soup.find_all()
-                    self.parsing_url(parse_url)
-            except:
-                continue
+        pool = multiprocessing.Pool(processes=100)
+        url_list = pool.map(self.parsing_url, self.parse_url_list)
+        pool.close()
+        pool.join()
+        for i in url_list:
+            for j in i:
+                for seed in self.domain_list:
+                    if (seed in j):
+                        self.url_list[seed]['documents'].append(j)
+        for seed in self.domain_list:
+            self.url_list[seed]['documents'] = list(set(self.url_list[seed]['documents']))
         self.inject_url()
 
-    def parsing_url(self,parse_html):
+    def connect_url(self,url):
+        try:
+            with urllib.request.urlopen(url) as response:
+                html = response.read()
+                soup = BeautifulSoup(html, 'html.parser')
+                parsing_url_html = soup.find_all()
+                return parsing_url_html
+
+                # self.parsing_url(parsing_url_html,i)
+        except Exception as e:
+            print(e)
+    def parsing_url(self,parse_url):
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
-        for i in parse_html:
+        print("start parsing url : ", parse_url)
+        parse_list = []
+        for i in self.connect_url(parse_url):
             try:
                 for seed in self.domain_list:
+                    if(i['href'][0] == '/' and seed in parse_url and (seed+i['href'][1:] not in self.url_list[seed]['documents'])):
+                        parse_list.append(seed+i['href'][1:])
+                        #self.url_list[seed]['documents'].append(seed+i['href'][1:])
+                        #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
                     if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
-                        self.url_list[seed]['documents'].append(i['href'])
+                        parse_list.append(i['href'])
+                        #self.url_list[seed]['documents'].append(i['href'])
+                        #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
             except:
                 continue
+        print("end parsing url : ", parse_url)
 
-
+        return parse_list
     def get_cof(self):
         '''
         설정을 받아옵니다
@@ -77,7 +102,7 @@ class jongdal:
         '''
         self.url_list = {}
         for i in self.get_seed():
-            self.url_list[re.sub('/|http://www.|https://www.|\n','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'documents':[re.sub('\n','',i)]}
+            self.url_list[re.sub('\n|\t|\r','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'documents':[re.sub('\n','',i)]}
 
     def get_domain(self):
         '''
