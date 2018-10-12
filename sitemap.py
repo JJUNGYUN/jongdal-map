@@ -57,7 +57,8 @@ class jongdal:
             'Accept-Language': 'en-US,en;q=0.8', 'Connection': 'keep-alive'}
 
         try:
-            with urllib.request.urlopen(url,headers =hdr) as response:
+            req = urllib.request.Request(url, headers=hdr);
+            with urllib.request.urlopen(req) as response:
                 html = response.read()
                 soup = BeautifulSoup(html, 'html.parser')
                 parsing_url_html = soup.find_all()
@@ -72,21 +73,24 @@ class jongdal:
         '''
         print("start parsing url : ", parse_url)
         parse_list = []
-        for i in self.connect_url(parse_url):
-            try:
-                for seed in self.domain_list:
-                    if(i['href'][0] == '/' and seed in parse_url and (seed+i['href'][1:] not in self.url_list[seed]['documents'])):
-                        for apend in self.full_domain_url_list:
-                            if seed in apend:
-                                parse_list.append(apend+i['href'][1:])
-                        #self.url_list[seed]['documents'].append(seed+i['href'][1:])
-                        #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
-                    if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
-                        parse_list.append(i['href'])
-                        #self.url_list[seed]['documents'].append(i['href'])
-                        #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
-            except:
-                continue
+        try:
+            for i in self.connect_url(parse_url):
+                try:
+                    for seed in self.domain_list:
+                        if(i['href'][0] == '/' and seed in parse_url and (seed+i['href'][1:] not in self.url_list[seed]['documents'])):
+                            for apend in self.full_domain_url_list:
+                                if seed in apend:
+                                    parse_list.append(apend+i['href'][1:])
+                            #self.url_list[seed]['documents'].append(seed+i['href'][1:])
+                            #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
+                        if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
+                            parse_list.append(i['href'])
+                            #self.url_list[seed]['documents'].append(i['href'])
+                            #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
+                except:
+                    continue
+        except Exception as e:
+            print(e)
         print("end parsing url : ", parse_url)
 
         return parse_list
