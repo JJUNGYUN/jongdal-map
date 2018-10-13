@@ -6,9 +6,10 @@ import json
 import re
 import datetime
 from xml.etree.ElementTree import parse
-import multiprocessing
+from multiprocessing import Queue, Process, Manager
 import time
 import sys
+import pickle
 
 class jongdal:
     def __init__(self, depth):
@@ -31,23 +32,63 @@ class jongdal:
             for url in self.url_list[str(domain)]['documents']:
                 self.parse_url_list.append(url)
 
+    def process_starter(self):
+        for p in self.processes:
+            p.start()
+        for p in self.processes:
+            p.join()
+        self.processes = []
+
+
+    def save_sub_db(self,l):
+        with open('sub_db.pickle', 'ab') as f:
+            for a in l:
+                pickle.dump(a, f)
+
+
+    def sub_db_to_json(self):
+        f = open('sub_db.pickle', 'rb')
+        url_list =[]
+        while 1:
+            try:
+                u = pickle.load(f)
+                url_list.append(u)
+            except EOFError:
+                break
+
+        for i in url_list:
+            for seed in self.domain_list:
+                if (seed in i):
+                    self.url_list[seed]['documents'].append(i)
+        for seed in self.domain_list:
+            self.url_list[seed]['documents'] = list(set(self.url_list[seed]['documents']))
+
+        self.inject_url()
+
     def url_parser(self):
         '''
         들어간 url을 bs4를 이용하여 html을 파싱합니다
         :return:
         '''
-        pool = multiprocessing.Pool(processes=15)
-        url_list = pool.map(self.parsing_url, self.parse_url_list)
-        pool.close()
-        pool.join()
-        for i in url_list:
-            for j in i:
-                for seed in self.domain_list:
-                    if (seed in j):
-                        self.url_list[seed]['documents'].append(j)
-        for seed in self.domain_list:
-            self.url_list[seed]['documents'] = list(set(self.url_list[seed]['documents']))
-        self.inject_url()
+        self.q = Queue()
+        self.processes = []
+
+        with Manager() as manager:
+            l = manager.list()
+            for parse_url in self.parse_url_list:
+                if self.q.qsize() > 15:
+                    self.process_starter()
+                if len(l) > 1000:
+                    self.save_sub_db(l)
+                    l = manager.list()
+                p = Process(target=self.parsing_url, args=(parse_url,l))
+                self.q.put(parse_url)
+                self.processes.append(p)
+
+            self.process_starter()
+            self.save_sub_db(l)
+
+        self.sub_db_to_json()
 
     def connect_url(self,url):
         hdr = {
@@ -67,7 +108,8 @@ class jongdal:
                 # self.parsing_url(parsing_url_html,i)
         except Exception as e:
             print(e)
-    def parsing_url(self,parse_url):
+
+    def parsing_url(self,parse_url,l):
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
@@ -80,20 +122,18 @@ class jongdal:
                         if(i['href'][0] == '/' and seed in parse_url ):
                             for apend in self.full_domain_url_list:
                                 if seed in apend:
-                                    parse_list.append(apend+i['href'][1:])
-                            #self.url_list[seed]['documents'].append(seed+i['href'][1:])
-                            #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
+                                    l.append(apend+i['href'][1:])
+
                         if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
-                            parse_list.append(i['href'])
-                            #self.url_list[seed]['documents'].append(i['href'])
-                            #self.url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
+                            l.append(i['href'])
+                            
                 except:
                     continue
         except Exception as e:
             print(e)
         print("end parsing url : ", parse_url)
+        self.q.get()
 
-        return parse_list
     def get_cof(self):
         '''
         설정을 받아옵니다
@@ -115,7 +155,7 @@ class jongdal:
         '''
         self.url_list = {}
         for i in self.get_seed():
-            self.url_list[re.sub('\n|\t|\r|https://|www.|http://','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.depth,'documents':[re.sub('\n','',i)]}
+            self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.depth,'documents':[re.sub('\n','',i)]}
 
     def get_domain(self):
         '''
