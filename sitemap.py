@@ -113,27 +113,29 @@ class jongdal:
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
-        print("start parsing url : ", parse_url)
-        parse_list = []
-        try:
-            for i in self.connect_url(parse_url):
-                try:
-                    for seed in self.domain_list:
-                        if(i['href'][0] == '/' and seed in parse_url ):
-                            for apend in self.full_domain_url_list:
-                                if seed in apend:
-                                    l.append(apend+i['href'][1:])
+        if((('.pdf' and'.jpg'and'.bmp'and'.jpeg'and'.mp4'and'.doc'and'.exe'and'.pptx'and'.png') not in parse_url)):
+            print("start parsing url : ", parse_url)
+            parse_list = []
+            try:
+                for i in self.connect_url(parse_url):
+                    try:
+                        for seed in self.domain_list:
+                            if(i['href'][0] == '/' and seed in parse_url ):
+                                for apend in self.full_domain_url_list:
+                                    if seed in apend:
+                                        l.append(apend+i['href'][1:])
 
-                        if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
-                            l.append(i['href'])
-                            
-                except:
-                    continue
-        except Exception as e:
-            print(e)
-        print("end parsing url : ", parse_url)
-        self.q.get()
+                            if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
+                                l.append(i['href'])
 
+                    except:
+                        continue
+            except Exception as e:
+                print(e)
+            print("end parsing url : ", parse_url)
+            self.q.get()
+        else:
+            print('reject')
     def get_cof(self):
         '''
         설정을 받아옵니다
