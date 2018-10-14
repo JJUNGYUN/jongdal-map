@@ -13,12 +13,14 @@ import pickle
 
 class jongdal:
     def __init__(self, depth):
+        self.working_count = 0
         self.depth = int(depth)
         self.conf = self.get_cof()
         self.make_dict()
         self.inject_url()
         self.get_domain()
         for i in range(self.depth):
+            self.working_count += 1
             self.make_url_list()
             self.url_parser()
 
@@ -62,7 +64,7 @@ class jongdal:
                     self.url_list[seed]['documents'].append(i)
         for seed in self.domain_list:
             self.url_list[seed]['documents'] = list(set(self.url_list[seed]['documents']))
-
+            self.url_list[seed]['depth'] = self.working_count
         self.inject_url()
 
     def url_parser(self):
@@ -113,7 +115,7 @@ class jongdal:
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
-        if((('.pdf' and'.jpg'and'.bmp'and'.jpeg'and'.mp4'and'.doc'and'.exe'and'.pptx'and'.png') not in parse_url)):
+        if((('.pdf' and'.jpg'and'.bmp'and'.jpeg'and'.mp4'and'.doc'and'.exe'and'.pptx'and'.png'and'.mp3'and'.doc'and'.docx'and'.ppt'and'.zip'and'.tar.gz'and'.rar'and'.alz'and'.az'and'.7zip'and'.tar'and'.iso'and'.wmf'and'.WMF'and'.csv'and'.xls'and'.GIF'and'.gif'and'.exe') not in parse_url)):
             print("start parsing url : ", parse_url)
             parse_list = []
             try:
@@ -135,7 +137,7 @@ class jongdal:
             print("end parsing url : ", parse_url)
             self.q.get()
         else:
-            print('reject')
+            print('Reject')
     def get_cof(self):
         '''
         설정을 받아옵니다
@@ -157,7 +159,7 @@ class jongdal:
         '''
         self.url_list = {}
         for i in self.get_seed():
-            self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.depth,'documents':[re.sub('\n','',i)]}
+            self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.working_count,'documents':[re.sub('\n','',i)]}
 
     def get_domain(self):
         '''
