@@ -117,7 +117,7 @@ class jongdal:
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
-        if((('.pdf' and'.jpg'and'.bmp'and'.jpeg'and'.mp4'and'.doc'and'.exe'and'.pptx'and'.png'and'.mp3'and'.doc'and'.docx'and'.ppt'and'.zip'and'.tar.gz'and'.rar'and'.alz'and'.az'and'.7zip'and'.tar'and'.iso'and'.wmf'and'.WMF'and'.csv'and'.xls'and'.GIF'and'.gif'and'.exe') not in parse_url)):
+        if((('.pdf' or'.jpg'or'.bmp'or'.jpeg'or'.mp4'or'.doc'or'.exe'or'.pptx'or'.png'or'.mp3'or'.doc'or'.docx'or'.ppt'or'.zip'or'.tar.gz'or'.rar'or'.alz'or'.az'or'.7zip'or'.tar'or'.iso'or'.wmf'or'.WMF'or'.csv'or'.xls'or'.GIF'or'.gif'or'.exe') not in parse_url)):
             print("start parsing url : ", parse_url)
             parse_list = []
             try:
