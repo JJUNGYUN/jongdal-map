@@ -46,7 +46,9 @@ class jongdal:
         with open('sub_db.pickle', 'ab') as f:
             for a in l:
                 pickle.dump(a, f)
-
+    def clear_sub_db(self):
+        with open('sub_db.pickle', 'w+') as f:
+            pickle.dump('',f)
 
     def sub_db_to_json(self):
         f = open('sub_db.pickle', 'rb')
@@ -74,7 +76,7 @@ class jongdal:
         '''
         self.q = Queue()
         self.processes = []
-
+        self.clear_sub_db()
         with Manager() as manager:
             l = manager.list()
             for parse_url in self.parse_url_list:
