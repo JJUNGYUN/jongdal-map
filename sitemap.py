@@ -36,7 +36,7 @@ class jongdal:
         for p in self.processes:
             p.start()
         for p in self.processes:
-            p.join([6])
+            p.join(6)
 
         self.processes = []
 
