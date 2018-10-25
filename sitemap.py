@@ -37,7 +37,7 @@ class jongdal:
             p.start()
         for p in self.processes:
             p.join()
-        time.sleep(10)
+        time.sleep(6)
         for i in self.processes:
             i.kill()
         self.processes = []
