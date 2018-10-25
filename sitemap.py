@@ -117,8 +117,8 @@ class jongdal:
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
-        if((('.pdf' or'.jpg'or'.bmp'or'.jpeg'or'.mp4'or'.doc'or'.exe'or'.pptx'or'.png'or'.mp3'or'.doc'or'.docx'or'.ppt'or'.zip'or'.tar.gz'or'.rar'or'.alz'or'.az'or'.7zip'or'.tar'or'.iso'or'.wmf'or'.WMF'or'.csv'or'.xls'or'.GIF'or'.gif'or'.exe') not in parse_url)):
-            print("start parsing url : ", parse_url)
+        if((('.PDF' or'.MP4' or'.DOC' or'.docx' or'.pdf' or'.jpg'or'.bmp'or'.jpeg'or'.mp4'or'.doc'or'.exe'or'.pptx'or'.png'or'.mp3'or'.doc'or'.docx'or'.ppt'or'.zip'or'.tar.gz'or'.rar'or'.alz'or'.az'or'.7zip'or'.tar'or'.iso'or'.wmf'or'.WMF'or'.csv'or'.xls'or'.GIF'or'.gif'or'.exe') not in parse_url)):
+            print(datetime.datetime.now()," start parsing url : ", parse_url)
             parse_list = []
             try:
                 for i in self.connect_url(parse_url):
@@ -136,7 +136,7 @@ class jongdal:
                         continue
             except Exception as e:
                 print(e)
-            print("end parsing url : ", parse_url)
+            print(datetime.datetime.now()," end parsing url : ", parse_url)
             self.q.get()
         else:
             print('Reject')
