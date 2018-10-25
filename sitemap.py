@@ -5,12 +5,10 @@ import pandas as pd
 import json
 import re
 import datetime
-from xml.etree.ElementTree import parse
 from multiprocessing import Queue, Process, Manager
-import time
 import sys
 import pickle
-
+import time
 class jongdal:
     def __init__(self, depth):
         self.working_count = 0
@@ -39,6 +37,9 @@ class jongdal:
             p.start()
         for p in self.processes:
             p.join()
+        time.sleep(10)
+        for i in self.processes:
+            i.kill()
         self.processes = []
 
 
@@ -82,12 +83,14 @@ class jongdal:
             for parse_url in self.parse_url_list:
                 if self.q.qsize() > 30:
                     self.process_starter()
+
                 if len(l) > 1000:
                     self.save_sub_db(l)
                     l = manager.list()
                 p = Process(target=self.parsing_url, args=(parse_url,l))
                 self.q.put(parse_url)
                 self.processes.append(p)
+
 
             self.process_starter()
             self.save_sub_db(l)
@@ -119,7 +122,6 @@ class jongdal:
         '''
         if((('.PDF' or'.MP4' or'.DOC' or'.docx' or'.pdf' or'.jpg'or'.bmp'or'.jpeg'or'.mp4'or'.doc'or'.exe'or'.pptx'or'.png'or'.mp3'or'.doc'or'.docx'or'.ppt'or'.zip'or'.tar.gz'or'.rar'or'.alz'or'.az'or'.7zip'or'.tar'or'.iso'or'.wmf'or'.WMF'or'.csv'or'.xls'or'.GIF'or'.gif'or'.exe') not in parse_url)):
             print(datetime.datetime.now()," start parsing url : ", parse_url)
-            parse_list = []
             try:
                 for i in self.connect_url(parse_url):
                     try:
