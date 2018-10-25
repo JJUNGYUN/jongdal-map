@@ -39,7 +39,7 @@ class jongdal:
             p.join()
         time.sleep(6)
         for i in self.processes:
-            i.kill()
+            i.terminate()
         self.processes = []
 
 
