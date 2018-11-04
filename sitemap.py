@@ -6,14 +6,13 @@ import json
 import re
 import datetime
 from multiprocessing import Queue, Process, Manager
-import sys
 import pickle
 import log
-
+import check_overlap_url
 
 class jongdal:
     def __init__(self, depth):
-        self.working_count =0
+        self.working_count = 0
         self.depth = int(depth)
         self.conf = self.get_cof()
         self.make_dict()
@@ -22,6 +21,10 @@ class jongdal:
         for i in range(self.depth):
             self.working_count += 1
             self.make_url_list()
+            for seed in self.domain_list:
+                check_overlap_url.completed_url_save(domain=seed, url_list=self.url_list[seed]['documents'])
+                print("===============",self.url_list[seed]['documents'])
+            print(self.parse_url_list)
             self.url_parser()
 
     def make_url_list(self):
@@ -30,7 +33,8 @@ class jongdal:
         '''
         self.parse_url_list = []
         for domain in self.domain_list:
-            for url in self.url_list[str(domain)]['documents']:
+            ncompleted_list = check_overlap_url.check_overlap_url(domain=domain,url_list=self.url_list[str(domain)]['documents'])
+            for url in ncompleted_list:
                 self.parse_url_list.append(url)
 
     def process_starter(self):
@@ -40,7 +44,6 @@ class jongdal:
             p.join(6)
 
         self.processes = []
-
 
     def save_sub_db(self,l):
         with open('sub_db.pickle', 'ab') as f:
@@ -66,6 +69,7 @@ class jongdal:
                     self.url_list[seed]['documents'].append(i)
         for seed in self.domain_list:
             self.url_list[seed]['documents'] = list(set(self.url_list[seed]['documents']))
+
             self.url_list[seed]['depth'] = self.working_count
         self.inject_url()
 
@@ -78,25 +82,25 @@ class jongdal:
         self.processes = []
         self.clear_sub_db()
         with Manager() as manager:
-            l = manager.list()
+            parsing_url_list = manager.list()
             for parse_url in self.parse_url_list:
                 if self.q.qsize() > 30:
                     self.process_starter()
 
-                if len(l) > 1000:
-                    self.save_sub_db(l)
-                    l = manager.list()
-                p = Process(target=self.parsing_url, args=(parse_url,l))
+                if len(parsing_url_list) > 1000:
+                    self.save_sub_db(parsing_url_list)
+                    parsing_url_list = manager.list()
+                p = Process(target=self.parsing_url, args=(parse_url,parsing_url_list))
                 self.q.put(parse_url)
                 self.processes.append(p)
 
-
             self.process_starter()
-            self.save_sub_db(l)
+            self.save_sub_db(parsing_url_list)
 
         self.sub_db_to_json()
 
     def connect_url(self,url):
+        logger = log.jlog()
         hdr = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -104,16 +108,15 @@ class jongdal:
             'Accept-Language': 'en-US,en;q=0.8', 'Connection': 'keep-alive'}
 
         try:
-            req = urllib.request.Request(url, headers=hdr);
+            req = urllib.request.Request(url, headers=hdr)
             with urllib.request.urlopen(req) as response:
                 html = response.read()
                 soup = BeautifulSoup(html, 'html.parser')
                 parsing_url_html = soup.find_all()
                 return parsing_url_html
 
-                # self.parsing_url(parsing_url_html,i)
         except Exception as e:
-            print(e)
+            logger.error(str(e))
 
     def parsing_url(self,parse_url,l):
         '''
@@ -133,7 +136,6 @@ class jongdal:
 
                             if (seed in i['href']) and (i not in self.url_list[seed]['documents']):
                                 l.append(i['href'])
-
                     except:
                         continue
             except Exception as e:
@@ -141,7 +143,7 @@ class jongdal:
             logger.info(" Working depth : "+str(self.working_count)+str(" | end parsing url : "+parse_url))
             self.q.get()
         else:
-            logger.info(str('Reject'))
+            logger.info(str(parse_url)+"is file url")
     def get_cof(self):
         '''
         설정을 받아옵니다
@@ -173,7 +175,6 @@ class jongdal:
         self.full_domain_url_list = []
         for i in self.domain_list:
             self.full_domain_url_list.append(self.url_list[i]['url'])
-        print(self.full_domain_url_list)
 
     def inject_url(self):
         '''
