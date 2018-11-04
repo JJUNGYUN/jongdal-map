@@ -6,7 +6,7 @@ class jlog:
         self.jongdalogger = logging.getLogger("jongdal")
         self.jongdalogger.setLevel(logging.INFO)
 
-        formtter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formtter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
         stream_hander = logging.StreamHandler()
         stream_hander.setFormatter(formtter)
@@ -15,3 +15,9 @@ class jlog:
         file_handler = logging.FileHandler("jongdal"+str(datetime.datetime.now().strftime('%Y-%m-%d'))+".log")
         file_handler.setFormatter(formtter)
         self.jongdalogger.addHandler(file_handler)
+
+    def info(self,text):
+        self.jongdalogger.info(text)
+
+    def error(self,text):
+        self.jongdalogger.error(text)

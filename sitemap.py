@@ -4,15 +4,16 @@ import urllib.parse
 import pandas as pd
 import json
 import re
+import datetime
 from multiprocessing import Queue, Process, Manager
+import sys
 import pickle
 import log
-import datetime
+
 
 class jongdal:
-    def __init__(self, depth, logger):
-        self.logger = logger
-        self.working_count = 0
+    def __init__(self, depth):
+        self.working_count =0
         self.depth = int(depth)
         self.conf = self.get_cof()
         self.make_dict()
@@ -26,7 +27,6 @@ class jongdal:
     def make_url_list(self):
         '''
         크롤링할 url의 리스트를 제작합니다.
-        :return:
         '''
         self.parse_url_list = []
         for domain in self.domain_list:
@@ -57,8 +57,7 @@ class jongdal:
             try:
                 u = pickle.load(f)
                 url_list.append(u)
-            except EOFError as e:
-                self.logger.error(e)
+            except EOFError:
                 break
 
         for i in url_list:
@@ -90,7 +89,8 @@ class jongdal:
                 p = Process(target=self.parsing_url, args=(parse_url,l))
                 self.q.put(parse_url)
                 self.processes.append(p)
-            print(self.q.qsize())
+
+
             self.process_starter()
             self.save_sub_db(l)
 
@@ -113,14 +113,15 @@ class jongdal:
 
                 # self.parsing_url(parsing_url_html,i)
         except Exception as e:
-            self.logger.error(e)
+            print(e)
 
     def parsing_url(self,parse_url,l):
         '''
         전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
         '''
+        logger = log.jlog()
         if((('.PDF' or'.MP4' or'.DOC' or'.docx' or'.pdf' or'.jpg'or'.bmp'or'.jpeg'or'.mp4'or'.doc'or'.exe'or'.pptx'or'.png'or'.mp3'or'.doc'or'.docx'or'.ppt'or'.zip'or'.tar.gz'or'.rar'or'.alz'or'.az'or'.7zip'or'.tar'or'.iso'or'.wmf'or'.WMF'or'.csv'or'.xls'or'.GIF'or'.gif'or'.exe') not in parse_url)):
-            self.logger.info(datetime.datetime.now()," start parsing url : ", parse_url)
+            logger.info(" Working depth : "+str(self.working_count)+str(" | start parsing url : "+parse_url))
             try:
                 for i in self.connect_url(parse_url):
                     try:
@@ -136,11 +137,11 @@ class jongdal:
                     except:
                         continue
             except Exception as e:
-                self.logger.error(e)
-            self.logger.info(datetime.datetime.now()," end parsing url : ", parse_url)
+                logger.error(str(e))
+            logger.info(" Working depth : "+str(self.working_count)+str(" | end parsing url : "+parse_url))
             self.q.get()
         else:
-            self.logger.info(parse_url,"is file")
+            logger.info(str('Reject'))
     def get_cof(self):
         '''
         설정을 받아옵니다
@@ -172,20 +173,11 @@ class jongdal:
         self.full_domain_url_list = []
         for i in self.domain_list:
             self.full_domain_url_list.append(self.url_list[i]['url'])
+        print(self.full_domain_url_list)
+
     def inject_url(self):
         '''
         파싱한 url을 json형태로 저장합니다.
         '''
         with open('url_db.json', 'w+', encoding="utf-8") as make_file:
             json.dump(self.url_list, make_file, ensure_ascii=False, indent="\t")
-
-'''
-if __name__ == '__main__':
-
-    logger = log.jlog()
-    step = logger.jongdalogger.info("1.Crawl start 2.View crawl site 3.Quit")
-    step = int(input())
-    depth = int(input('Insert crawl depth : '))
-    jongdal(depth=depth,logger=logger)
-    print("="*200)
-'''

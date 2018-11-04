@@ -9,4 +9,4 @@ if __name__ == '__main__':
     step = int(input())
     if (step == 1):
         depth = int(input('Insert crawl depth : '))
-        crawler = sitemap.jongdal(depth=depth,logger=logger)
+        crawler = sitemap.jongdal(depth=depth)
