@@ -20,7 +20,6 @@ def check_overlap_url(domain,url_list):
             if url not in completed_url_list:
                 ncompleted_url_list.append(url)
     except FileNotFoundError as e:
-        print(e)
         f = open('checked_pickle/'+str(domain), 'wb+')
         f.close()
 

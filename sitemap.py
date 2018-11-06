@@ -23,8 +23,6 @@ class jongdal:
             self.make_url_list()
             for seed in self.domain_list:
                 check_overlap_url.completed_url_save(domain=seed, url_list=self.url_list[seed]['documents'])
-                print("===============",self.url_list[seed]['documents'])
-            print(self.parse_url_list)
             self.url_parser()
 
     def make_url_list(self):
