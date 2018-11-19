@@ -67,8 +67,8 @@ class jongdal:
                     self.url_list[seed]['documents'].append(i)
         for seed in self.domain_list:
             self.url_list[seed]['documents'] = list(set(self.url_list[seed]['documents']))
-
             self.url_list[seed]['depth'] = self.working_count
+            self.url_list[seed]['end_date'] = str(datetime.datetime.now())
         self.inject_url()
 
     def url_parser(self):
@@ -163,7 +163,7 @@ class jongdal:
         '''
         self.url_list = {}
         for i in self.get_seed():
-            self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',i)]={'title':'','url':re.sub('\n','',i),'data':str(datetime.datetime.now()),'depth':self.working_count,'documents':[re.sub('\n','',i)]}
+            self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',i)]={'title':'','url':re.sub('\n','',i),'start_data':str(datetime.datetime.now()),'end_date':str(datetime.datetime.now()),'depth':self.working_count,'documents':[re.sub('\n','',i)]}
 
     def get_domain(self):
         '''
