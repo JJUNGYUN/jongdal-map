@@ -10,22 +10,27 @@ import pickle
 import log
 import check_overlap_url
 
+
+
 class jongdal:
     def __init__(self, depth):
-        self.working_count = 0
         self.depth = int(depth)
         self.conf = self.get_cof()
-        self.make_dict()
-        self.inject_url()
-        self.get_domain()
-        for i in range(self.depth):
-            self.working_count += 1
-            self.make_url_list()
-            for seed in self.domain_list:
-                check_overlap_url.completed_url_save(domain=seed, url_list=self.url_list[seed]['documents'])
-            self.url_parser()
+        crawl_url_list = self.get_seed()
+        for url in crawl_url_list:
+            self.working_count = 0
+            self.make_dict(url)
+            self.get_domain(url)
+            check_overlap_url.clear_url_lsit(self.domain_list[0])
+            self.inject_url()
+            for d in range(self.depth):
+                self.working_count += 1
+                self.make_url_list(url)
+                for seed in self.domain_list:
+                    check_overlap_url.completed_url_save(domain=seed, url_list=self.url_list[seed]['documents'])
+                self.url_parser()
 
-    def make_url_list(self):
+    def make_url_list(self,url):
         '''
         크롤링할 url의 리스트를 제작합니다.
         '''
@@ -84,7 +89,6 @@ class jongdal:
             for parse_url in self.parse_url_list:
                 if self.q.qsize() > 30:
                     self.process_starter()
-
                 if len(parsing_url_list) > 1000:
                     self.save_sub_db(parsing_url_list)
                     parsing_url_list = manager.list()
@@ -157,15 +161,14 @@ class jongdal:
         f = open('seed.txt','r')
         return f
 
-    def make_dict(self):
+    def make_dict(self,url):
         '''
         json에 저장하기위한 dict형식의 변수를 생성합니다.
         '''
         self.url_list = {}
-        for i in self.get_seed():
-            self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',i)]={'title':'','url':re.sub('\n','',i),'start_data':str(datetime.datetime.now()),'end_date':str(datetime.datetime.now()),'depth':self.working_count,'documents':[re.sub('\n','',i)]}
+        self.url_list[re.sub('\n|\t|\r|https://|www.|http://|/','',url)]={'title':'','url':re.sub('\n','',url),'start_data':str(datetime.datetime.now()),'end_date':str(datetime.datetime.now()),'depth':self.working_count,'documents':[re.sub('\n','',url)]}
 
-    def get_domain(self):
+    def get_domain(self,url):
         '''
         seed에입력된 사이트에 해당되는 사이트만을 거르기위해 실행됩니다.
         '''
@@ -178,5 +181,5 @@ class jongdal:
         '''
         파싱한 url을 json형태로 저장합니다.
         '''
-        with open('url_db.json', 'w+', encoding="utf-8") as make_file:
+        with open(str(self.domain_list[0])+'.json', 'w+', encoding="utf-8") as make_file:
             json.dump(self.url_list, make_file, ensure_ascii=False, indent="\t")

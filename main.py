@@ -1,7 +1,6 @@
 import log
 import sitemap
 
-
 if __name__ == '__main__':
 
     logger = log.jlog().jongdalogger
@@ -10,3 +9,4 @@ if __name__ == '__main__':
     if (step == 1):
         depth = int(input('Insert crawl depth : '))
         crawler = sitemap.jongdal(depth=depth)
+
