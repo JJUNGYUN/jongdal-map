@@ -1,5 +1,9 @@
 import pickle
 
+def clear_url_lsit(domain):
+    with open('checked_pickle/'+str(domain), 'w') as f:
+        pass
+
 def completed_url_save(domain,url_list):
     with open('checked_pickle/'+str(domain), 'ab') as f:
         for i in url_list:
