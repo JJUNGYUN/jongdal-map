@@ -70,8 +70,7 @@ class jongdal:
             if i["fileUrl"] not in self.file_list:
                 self.file_list.append(i["fileUrl"])
                 self.set_data.append(i)
-        for i in self.set_data:
-            i['fileSrc'] = i['host'] + '/' + i['fileUrl'].split('/')[-1]
+
 
         return self.set_data
 
@@ -172,7 +171,7 @@ class jongdal:
             "fileType": ftype,
             "introUrl": introurl,
             "fileUrl": fileurl,
-            "fileSrc": "",
+            "fileSrc": fileurl,
             "regDate": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
             "recentWorkDate": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
             "category": "",
