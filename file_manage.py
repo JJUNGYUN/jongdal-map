@@ -1,12 +1,16 @@
 import pickle
 from crawler import *
-
+import os
 
 def save_sub_db(l):
     with open('sub_db.pickle', 'ab') as f:
         for a in l:
             pickle.dump(a, f)
 
+def save_script_db(l):
+    with open('script_sub_db.pickle', 'ab') as f:
+        for a in l:
+            pickle.dump(a, f)
 
 def save_filesub_db(l):
     with open('file_sub_db.pickle', 'ab') as f:
@@ -15,11 +19,15 @@ def save_filesub_db(l):
 
 
 def clear_sub_db():
-    with open('sub_db.pickle', 'wb+') as f:
-        pickle.dump("\n",f)
+    try:
+        os.remove('./script_sub_db.pickle')
+        os.remove('./file_sub_db.pickle')
+        os.remove('./sub_db.pickle')
+    except:
+        pass
 
 
-def fileinfo_save(domain_list,set_data,file_list):
+def fileinfo_save(domain,set_data,file_list):
     f = open('file_sub_db.pickle', 'rb')
     url_file_list = []
     while 1:
@@ -29,8 +37,24 @@ def fileinfo_save(domain_list,set_data,file_list):
         except EOFError:
             break
 
-    with open(str(domain_list[0]) + '_file.json', 'w+', encoding="utf-8") as f:
+    with open(str(domain) + '_file.json', 'w+', encoding="utf-8") as f:
         json.dump(set_save_data(url_file_list,set_data,file_list),f,ensure_ascii=False, indent="\t")
+
+
+def script_save(domain):
+    f = open('script_sub_db.pickle', 'rb')
+    save_data = dict()
+    while 1:
+        try:
+            u = pickle.load(f)
+            if len(dict(u)[list(dict(u).keys())[0]]) == 0:
+                continue
+            save_data[list(dict(u).keys())[0]] = dict(u)[list(dict(u).keys())[0]]
+        except EOFError:
+            break
+
+    with open(str(domain) + '_script.json', 'w+', encoding="utf-8") as f:
+        json.dump(save_data,f,ensure_ascii=False, indent="\t")
 
 
 def set_save_data(data,set_data,file_list):
@@ -42,7 +66,7 @@ def set_save_data(data,set_data,file_list):
     return set_data
 
 
-def sub_db_to_json(domain_list,url_list,working_count):
+def sub_db_to_json(domain,url_list,working_count):
     f = open('sub_db.pickle', 'rb')
     url_ = []
     while 1:
@@ -53,14 +77,12 @@ def sub_db_to_json(domain_list,url_list,working_count):
             break
 
     for i in url_:
-        for seed in domain_list:
-            if (seed in i):
-                url_list[seed]['documents'].append(i)
-    for seed in domain_list:
-        url_list[seed]['documents'] = list(set(url_list[seed]['documents']))
-        url_list[seed]['depth'] = working_count
-        url_list[seed]['end_date'] = str(datetime.datetime.now())
-    inject_url(domain_list,url_list)
+        if (domain in i):
+            url_list[domain]['documents'].append(i)
+    url_list[domain]['documents'] = list(set(url_list[domain]['documents']))
+    url_list[domain]['depth'] = working_count
+    url_list[domain]['end_date'] = str(datetime.datetime.now())
+    inject_url(domain,url_list)
 
 
 def get_seed():

@@ -5,6 +5,8 @@ import pandas as pd
 import json
 import re
 import datetime
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from multiprocessing import Queue, Process, Manager
 import pickle
 import log_manage
@@ -12,16 +14,15 @@ import file_manage
 import overlap_manage
 
 
-def make_url_list(domain_list,url_list):
+def make_url_list(domain,url_list):
     '''
     크롤링할 url의 리스트를 제작합니다.
     '''
     parse_url_list = []
-    for domain in domain_list:
-        ncompleted_list = overlap_manage.check_overlap_url(domain=domain,
-                                                              url_list=url_list[str(domain)]['documents'])
-        for url in ncompleted_list:
-            parse_url_list.append(url)
+
+    ncompleted_list = overlap_manage.check_overlap_url(domain=domain, url_list=url_list[str(domain)]['documents'])
+    for url in ncompleted_list:
+        parse_url_list.append(url)
 
     return parse_url_list
 
@@ -35,8 +36,111 @@ def process_starter(processes):
 
     return []
 
+def get_html_sel(url,scripts):
+    parsing_url_html = []
+    parsing_url = []
+    driver = webdriver.Remote(command_executor='http://192.168.122.129:4444/wd/hub',
+                              desired_capabilities={'browserName': 'chrome'})
 
-def url_parser(parse_url_list,url_list,domain_list,full_domain_url_list,set_data,file_list,working_count):
+    for script in scripts:
+        driver.get(url)
+        driver.implicitly_wait(5)
+        try:
+            driver.execute_script(script)
+            driver.implicitly_wait(5)
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            parsing_url.append(driver.current_url)
+            parsing_url_html.append(soup.find_all())
+        except Exception as e:
+            print(e)
+
+    driver.quit()
+
+    return parsing_url, parsing_url_html
+
+
+def load_script_urls():
+    try:
+        with open("./dcinside.com_script.json", "r", encoding="utf8") as f:
+            data = json.load(f)
+    except:
+        return [],[]
+    urls = list(dict(data).keys())
+
+    url_scripts = list(dict(data).values())
+
+    return urls, url_scripts
+
+
+def script_crawl(url, script,parsed_url_list, file_url_list, script_list, url_list,working_count):
+    scripts = dict()
+    logger = log_manage.jlog()
+    logger.info(" Working depth : " + str(working_count) + str(" | start parsing url : " + url))
+    try:
+        parsing_url, parsing_url_html = get_html_sel(url, scripts=script) # 셀레니움 그리드를 사용
+        logger.info(" Working depth : " + str(working_count) + str(" | end parsing url : " + url))
+    except Exception as e:
+        logger.error(str(e))
+        return False
+
+    for cnt in range(len(parsing_url_html)):
+        scripts[parsing_url[cnt]] = list()
+        for i in parsing_url_html[cnt]:
+            try:
+                if i['href'][0] == '/' and (list(url_list.keys())[0] in parsing_url[cnt]):
+                    if not contact(i['href']):
+                        file_url_list.append(
+                            data_parser(url_list[list(url_list.keys())[0]]['url'] + i['href'], parsing_url[cnt],
+                                        list(url_list.keys())[0]))
+                    parsed_url_list.append(url_list[list(url_list.keys())[0]]['url'] + i['href'][1:])
+                elif (list(url_list.keys())[0] in i['href']) and (
+                        i not in url_list[list(url_list.keys())[0]]['documents']):
+                    if not contact(i['href']):
+                        file_url_list.append(data_parser(i['href'], parsing_url[cnt], list(url_list.keys())[0]))
+                    parsed_url_list.append(i['href'])
+                elif 'http' not in i['href']:
+                    scripts[parsing_url[cnt]].append(i['href'])
+            except Exception as e:
+                continue
+
+
+    script_list.append(scripts)
+    #script_list.append(scripts[parsing_url[cnt]])
+    #q.get()
+
+
+def script_crawler(url_list,working_count):
+    '''
+    들어간 url을 bs4를 이용하여 html을 파싱합니다
+    :return:
+    '''
+    q = Queue()
+    processes = []
+    urls, url_scripts = load_script_urls()
+    #with Manager() as manager:
+    parsed_url_list = list()
+    file_url_list = list()
+    script_list =list()
+    for cnt in range(len(urls)):
+        #if q.qsize() > 10:
+            #processes = process_starter(processes)
+        if len(parsed_url_list) > 1000:
+            file_manage.save_sub_db(parsed_url_list)
+            parsed_url_list = list()
+        script_crawl(urls[cnt], url_scripts[cnt], parsed_url_list,
+                                                   file_url_list, script_list,  url_list,working_count)
+            #p = Process(target=script_crawl, args=(urls[cnt], url_scripts[cnt], parsed_url_list,
+                                                   # file_url_list, script_list,  url_list,working_count,q))
+            #q.put(urls[cnt])
+            #processes.append(p)
+
+        #processes = process_starter(processes)
+        file_manage.save_sub_db(parsed_url_list)
+        file_manage.save_script_db(script_list)
+        file_manage.save_filesub_db(file_url_list)
+
+def nonscript_crawler(parse_url_list,url_list,working_count):
     '''
     들어간 url을 bs4를 이용하여 html을 파싱합니다
     :return:
@@ -45,32 +149,34 @@ def url_parser(parse_url_list,url_list,domain_list,full_domain_url_list,set_data
     processes = []
     file_manage.clear_sub_db()
     with Manager() as manager:
-        parsing_url_list = manager.list()
+        parsed_url_list = manager.list()
         file_url_list = manager.list()
-        print(parse_url_list)
+        script_list = manager.list()
         for parse_url in parse_url_list:
             if q.qsize() > 30:
                 processes= process_starter(processes)
-            if len(parsing_url_list) > 1000:
-                file_manage.save_sub_db(parsing_url_list)
-                parsing_url_list = manager.list()
-                #file_url_list = manager.list()
-            p = Process(target=parsing_url, args=(parse_url,parsing_url_list,file_url_list,url_list,domain_list,q,full_domain_url_list,working_count))
+            if len(parsed_url_list) > 1000:
+                file_manage.save_sub_db(parsed_url_list)
+                parsed_url_list = manager.list()
+
+            p = Process(target=parsing_url, args=(parse_url, parsed_url_list, file_url_list, url_list,
+                                                  q, working_count,script_list))
             q.put(parse_url)
             processes.append(p)
 
         processes = process_starter(processes)
-        file_manage.save_sub_db(parsing_url_list)
+        file_manage.save_sub_db(parsed_url_list)
+        file_manage.save_script_db(script_list)
         file_manage.save_filesub_db(file_url_list)
 
-    file_manage.fileinfo_save(domain_list,set_data,file_list)
-    file_manage.sub_db_to_json(domain_list,url_list,working_count)
+
 
 
 def connect_url(url):
     logger = log_manage.jlog()
     hdr = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)\
+         Chrome/60.0.3112.113 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3', 'Accept-Encoding': 'none',
         'Accept-Language': 'en-US,en;q=0.8', 'Connection': 'keep-alive'}
@@ -87,7 +193,7 @@ def connect_url(url):
         logger.error(str(e))
 
 
-def data_parser(fileurl,introurl,domain):
+def data_parser(fileurl, introurl, domain):
     if '.pdf' in fileurl or '.PDF' in fileurl:
         ftype = "pdf"
     elif '.doc' in fileurl or '.DOC' in fileurl:
@@ -119,45 +225,53 @@ def data_parser(fileurl,introurl,domain):
     return file_default
 
 
-def parsing_url(parse_url,l,file_url_list,url_list,domain_list,q,full_domain_url_list,working_count):
+def contact(url):
+    file_list = ['.PDF' ,'.MP4' ,'.DOC' ,'.docx' ,'.pdf' ,'.jpg','.bmp','.jpeg','.mp4','.doc','.exe','.pptx'
+         ,'.png','.mp3','.doc','.docx','.ppt','.zip','.tar.gz','.rar','.alz','.az','.7zip','.tar',
+         '.iso','.wmf','.WMF','.csv','.xls','.GIF','.gif','.exe']
+    for i in file_list:
+        if i in url:
+            return False
+
+    return True
+
+
+def parsing_url(parse_url, parsed_url_list, file_url_list, url_list,q, working_count,script_list):
     '''
     전달받은 html문서에서 seed.txt에 입력된 사이트에 해당이 되는 url을 파싱하여 저장합니다.
     '''
     logger = log_manage.jlog()
-    if((('.PDF' or'.MP4' or'.DOC' or'.docx' or'.pdf' or'.jpg'or'.bmp'or'.jpeg'or'.mp4'or'.doc'or'.exe'or'.pptx'
-         or'.png'or'.mp3'or'.doc'or'.docx'or'.ppt'or'.zip'or'.tar.gz'or'.rar'or'.alz'or'.az'or'.7zip'or'.tar'or
-         '.iso'or'.wmf'or'.WMF'or'.csv'or'.xls'or'.GIF'or'.gif'or'.exe') not in parse_url)):
+    script = dict()
+    script[parse_url] = list()
+    if contact(parse_url):
         logger.info(" Working depth : "+str(working_count)+str(" | start parsing url : "+parse_url))
         try:
             for i in connect_url(parse_url):
                 try:
-                    for seed in domain_list:
-                        if(i['href'][0] == '/' and seed in parse_url ):
-                            for apend in full_domain_url_list:
-                                if seed in apend:
-                                    if (('.pdf' or '.DOC' or '.docx' or '.pdf' or '.PDF' or '.doc' or '.docx' or '.ppt' or '.doc' or '.xls' or '.xlsx' or '.XLS' or '.XLSX') in \
-                                            i['href']):
-                                        file_url_list.append(data_parser(i['href'], parse_url, seed))
-                                    l.append(apend+str("/")+i['href'][1:])
-
-                        if (seed in i['href']) and (i not in url_list[seed]['documents']):
-                            if (('.pdf' or '.DOC' or '.docx' or '.pdf' or '.PDF' or '.doc' or '.docx' or '.ppt' or '.doc' or '.xls' or '.xlsx' or '.XLS' or '.XLSX') in \
-                                    i['href']):
-                                file_url_list.append(data_parser(i['href'], parse_url, seed))
-                            l.append(i['href'])
-                except:
+                    if i['href'][0] == '/' and (list(url_list.keys())[0] in parse_url):
+                        if not contact(i['href']):
+                            file_url_list.append(data_parser(url_list[list(url_list.keys())[0]]['url']+i['href'],parse_url, list(url_list.keys())[0]))
+                        parsed_url_list.append(url_list[list(url_list.keys())[0]]['url']+i['href'][1:])
+                    elif (list(url_list.keys())[0] in i['href']) and (i not in url_list[list(url_list.keys())[0]]['documents']):
+                        if not contact(i['href']):
+                            file_url_list.append(data_parser(i['href'], parse_url, list(url_list.keys())[0]))
+                        parsed_url_list.append(i['href'])
+                    elif 'http' not in i['href']:
+                        script[parse_url].append(i['href'])
+                except Exception as e:
                     continue
+            logger.info(" Working depth : " + str(working_count) + str(" | end parsing url : " + parse_url))
         except Exception as e:
             logger.error(str(e))
-        logger.info(" Working depth : "+str(working_count)+str(" | end parsing url : "+parse_url))
+
         q.get()
     else:
         logger.info(str(parse_url)+"is file url")
-
+    script_list.append(script)
 
 def make_dict(url,working_count):
     '''
-    json에 저장하기위한 dict형식의 변수를 생성합니다.
+    "json에 저장하기위한 dict형식의 변수를 생성합니다."
     '''
     url_list = {}
     url_file_list = {str(re.sub('\n|\t|\r|https://|www.|http://|/','',url))}
@@ -178,6 +292,6 @@ def get_domain(url_list):
     return domain_list,full_domain_url_list
 
 
-def inject_url(domain_list,url_list):
-    with open(str(domain_list[0])+'.json', 'w+', encoding="utf-8") as make_file:
+def inject_url(domain,url_list):
+    with open(str(domain)+'.json', 'w+', encoding="utf-8") as make_file:
         json.dump(url_list, make_file, ensure_ascii=False, indent="\t")
