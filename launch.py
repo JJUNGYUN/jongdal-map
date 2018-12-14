@@ -23,7 +23,7 @@ if __name__ == '__main__':
             completed_url_save(domain=list(url_list.keys())[0], url_list=url_list[list(url_list.keys())[0]]['documents'])
             nonscript_crawler(parse_url_list, url_list,working_count)
 
-            script_crawler(url_list, working_count)
+            #script_crawler(url_list, working_count)
 
             file_manage.fileinfo_save(list(url_list.keys())[0], set_data, file_list)
             file_manage.script_save(list(url_list.keys())[0])

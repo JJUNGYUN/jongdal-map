@@ -47,9 +47,10 @@ def script_save(domain):
     while 1:
         try:
             u = pickle.load(f)
+            print(list(set(dict(u)[list(dict(u).keys())[0]])))
             if len(dict(u)[list(dict(u).keys())[0]]) == 0:
                 continue
-            save_data[list(dict(u).keys())[0]] = dict(u)[list(dict(u).keys())[0]]
+            save_data[list(dict(u).keys())[0]] = list(set(dict(u)[list(dict(u).keys())[0]]))
         except EOFError:
             break
 

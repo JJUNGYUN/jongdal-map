@@ -73,73 +73,6 @@ def load_script_urls():
     return urls, url_scripts
 
 
-def script_crawl(url, script,parsed_url_list, file_url_list, script_list, url_list,working_count):
-    scripts = dict()
-    logger = log_manage.jlog()
-    logger.info(" Working depth : " + str(working_count) + str(" | start parsing url : " + url))
-    try:
-        parsing_url, parsing_url_html = get_html_sel(url, scripts=script) # 셀레니움 그리드를 사용
-        logger.info(" Working depth : " + str(working_count) + str(" | end parsing url : " + url))
-    except Exception as e:
-        logger.error(str(e))
-        return False
-
-    for cnt in range(len(parsing_url_html)):
-        scripts[parsing_url[cnt]] = list()
-        for i in parsing_url_html[cnt]:
-            try:
-                if i['href'][0] == '/' and (list(url_list.keys())[0] in parsing_url[cnt]):
-                    if not contact(i['href']):
-                        file_url_list.append(
-                            data_parser(url_list[list(url_list.keys())[0]]['url'] + i['href'], parsing_url[cnt],
-                                        list(url_list.keys())[0]))
-                    parsed_url_list.append(url_list[list(url_list.keys())[0]]['url'] + i['href'][1:])
-                elif (list(url_list.keys())[0] in i['href']) and (
-                        i not in url_list[list(url_list.keys())[0]]['documents']):
-                    if not contact(i['href']):
-                        file_url_list.append(data_parser(i['href'], parsing_url[cnt], list(url_list.keys())[0]))
-                    parsed_url_list.append(i['href'])
-                elif 'http' not in i['href']:
-                    scripts[parsing_url[cnt]].append(i['href'])
-            except Exception as e:
-                continue
-
-
-    script_list.append(scripts)
-    #script_list.append(scripts[parsing_url[cnt]])
-    #q.get()
-
-
-def script_crawler(url_list,working_count):
-    '''
-    들어간 url을 bs4를 이용하여 html을 파싱합니다
-    :return:
-    '''
-    q = Queue()
-    processes = []
-    urls, url_scripts = load_script_urls()
-    #with Manager() as manager:
-    parsed_url_list = list()
-    file_url_list = list()
-    script_list =list()
-    for cnt in range(len(urls)):
-        #if q.qsize() > 10:
-            #processes = process_starter(processes)
-        if len(parsed_url_list) > 1000:
-            file_manage.save_sub_db(parsed_url_list)
-            parsed_url_list = list()
-        script_crawl(urls[cnt], url_scripts[cnt], parsed_url_list,
-                                                   file_url_list, script_list,  url_list,working_count)
-            #p = Process(target=script_crawl, args=(urls[cnt], url_scripts[cnt], parsed_url_list,
-                                                   # file_url_list, script_list,  url_list,working_count,q))
-            #q.put(urls[cnt])
-            #processes.append(p)
-
-        #processes = process_starter(processes)
-        file_manage.save_sub_db(parsed_url_list)
-        file_manage.save_script_db(script_list)
-        file_manage.save_filesub_db(file_url_list)
-
 def nonscript_crawler(parse_url_list,url_list,working_count):
     '''
     들어간 url을 bs4를 이용하여 html을 파싱합니다
@@ -256,7 +189,9 @@ def parsing_url(parse_url, parsed_url_list, file_url_list, url_list,q, working_c
                         if not contact(i['href']):
                             file_url_list.append(data_parser(i['href'], parse_url, list(url_list.keys())[0]))
                         parsed_url_list.append(i['href'])
-                    elif 'http' not in i['href']:
+                    elif ('http' not in i['href']) and href_abc(i['href']):
+                        parsed_url_list.append(url_list[list(url_list.keys())[0]]['url'] + "/" + i['href'][1:])
+                    elif 'http' not in i['href'] :
                         script[parse_url].append(i['href'])
                 except Exception as e:
                     continue
@@ -268,6 +203,15 @@ def parsing_url(parse_url, parsed_url_list, file_url_list, url_list,q, working_c
     else:
         logger.info(str(parse_url)+"is file url")
     script_list.append(script)
+
+
+def href_abc(url):
+    for i in range(97, 123):
+        if url[0] == i:
+            return True
+
+    return False
+
 
 def make_dict(url,working_count):
     '''
