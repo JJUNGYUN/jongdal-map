@@ -2,15 +2,32 @@ import pickle
 from crawler import *
 import os
 
+
 def save_sub_db(l):
     with open('sub_db.pickle', 'ab') as f:
         for a in l:
             pickle.dump(a, f)
 
+
 def save_script_db(l):
+
     with open('script_sub_db.pickle', 'ab') as f:
         for a in l:
             pickle.dump(a, f)
+
+
+def load_script_urls():
+    try:
+        with open("./dcinside.com_script.json", "r", encoding="utf8") as f:
+            data = json.load(f)
+    except:
+        return [],[]
+    urls = list(dict(data).keys())
+
+    url_scripts = list(dict(data).values())
+
+    return urls, url_scripts
+
 
 def save_filesub_db(l):
     with open('file_sub_db.pickle', 'ab') as f:
@@ -36,7 +53,6 @@ def fileinfo_save(domain,set_data,file_list):
             url_file_list.append(u)
         except EOFError:
             break
-
     with open(str(domain) + '_file.json', 'w+', encoding="utf-8") as f:
         json.dump(set_save_data(url_file_list,set_data,file_list),f,ensure_ascii=False, indent="\t")
 
@@ -47,10 +63,9 @@ def script_save(domain):
     while 1:
         try:
             u = pickle.load(f)
-            print(list(set(dict(u)[list(dict(u).keys())[0]])))
             if len(dict(u)[list(dict(u).keys())[0]]) == 0:
                 continue
-            save_data[list(dict(u).keys())[0]] = list(set(dict(u)[list(dict(u).keys())[0]]))
+            save_data[list(dict(u).keys())[0]] = list(set(list(dict(u)[list(dict(u).keys())[0]])))
         except EOFError:
             break
 

@@ -12,7 +12,7 @@ import pickle
 import log_manage
 import file_manage
 import overlap_manage
-
+import urllib.parse
 
 def make_url_list(domain,url_list):
     '''
@@ -80,7 +80,7 @@ def nonscript_crawler(parse_url_list,url_list,working_count):
     '''
     q = Queue()
     processes = []
-    file_manage.clear_sub_db()
+    #file_manage.clear_sub_db()
     with Manager() as manager:
         parsed_url_list = manager.list()
         file_url_list = manager.list()
@@ -137,13 +137,12 @@ def data_parser(fileurl, introurl, domain):
         ftype = "pppt"
     else:
         ftype = "ERROR"
-
+    urllib.parse.quote_plus(str(i))
     file_default = {
         "host": domain,
         "fileType": ftype,
-        "introUrl": introurl,
-        "fileUrl": fileurl,
-        "fileSrc": fileurl,
+        "introUrl": urllib.parse.quote_plus(str(introurl)),
+        "fileSrc": urllib.parse.quote_plus(str(fileurl)),
         "regDate": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
         "recentWorkDate": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
         "category": "",

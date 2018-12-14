@@ -2,6 +2,7 @@ import log_manage
 from file_manage import *
 from crawler import *
 from overlap_manage import *
+from selenium_crawler import *
 
 if __name__ == '__main__':
     logger = log_manage.jlog().jongdalogger
@@ -10,6 +11,7 @@ if __name__ == '__main__':
 
     crawl_url_list = get_seed()
     for url in crawl_url_list:
+        clear_sub_db()
         file_list = []
         set_data = []
         working_count = 0
@@ -23,7 +25,7 @@ if __name__ == '__main__':
             completed_url_save(domain=list(url_list.keys())[0], url_list=url_list[list(url_list.keys())[0]]['documents'])
             nonscript_crawler(parse_url_list, url_list,working_count)
 
-            #script_crawler(url_list, working_count)
+            script_crawler(url_list, working_count)
 
             file_manage.fileinfo_save(list(url_list.keys())[0], set_data, file_list)
             file_manage.script_save(list(url_list.keys())[0])
