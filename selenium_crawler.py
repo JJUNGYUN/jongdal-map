@@ -97,9 +97,16 @@ def script_crawler(url_list,working_count):
     parsed_url_list = Manager().list()
     file_url_list = Manager().list()
     script_list = Manager().list()
+    print(urls,url_scripts)
     for cnt in range(len(urls)):
         if q.qsize() > 10:
             processes = process_starter(processes)
+            while True:
+                for i in processes:
+                    if not i.is_alive():
+                        processes.remove(i)
+                if len(processes) == 0:
+                    break
         if len(parsed_url_list) > 1000:
             file_manage.save_sub_db(parsed_url_list)
             parsed_url_list = Manager().list()
@@ -110,7 +117,11 @@ def script_crawler(url_list,working_count):
                                                     file_url_list, script_list,  url_list,working_count,q))
         q.put(urls[cnt])
         processes.append(p)
+
+
+    print(processes)
     process_starter(processes)
+
     while True:
         for i in processes:
             if not i.is_alive():
@@ -118,7 +129,6 @@ def script_crawler(url_list,working_count):
         if len(processes) == 0:
             break
 
-    print("꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙꾸아아아앙")
     file_manage.save_sub_db(parsed_url_list)
     file_manage.save_script_db(script_list)
     file_manage.save_filesub_db(file_url_list)
