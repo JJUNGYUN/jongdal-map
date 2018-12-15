@@ -91,13 +91,12 @@ def script_crawler(url_list,working_count):
     q = Queue()
     processes = []
     #file_manage.clear_sub_db()
-    urls, url_scripts = file_manage.load_script_urls()
+    urls, url_scripts = file_manage.load_script_urls(list(url_list.keys())[0])
     manager = Manager()
     # with Manager() as manager:
     parsed_url_list = Manager().list()
     file_url_list = Manager().list()
     script_list = Manager().list()
-    print(urls,url_scripts)
     for cnt in range(len(urls)):
         if q.qsize() > 10:
             processes = process_starter(processes)
@@ -119,7 +118,6 @@ def script_crawler(url_list,working_count):
         processes.append(p)
 
 
-    print(processes)
     process_starter(processes)
 
     while True:

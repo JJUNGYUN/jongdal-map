@@ -16,9 +16,9 @@ def save_script_db(l):
             pickle.dump(a, f)
 
 
-def load_script_urls():
+def load_script_urls(domain):
     try:
-        with open("./dcinside.com_script.json", "r", encoding="utf8") as f:
+        with open("./"+domain+"_script.json", "r", encoding="utf8") as f:
             data = json.load(f)
     except:
         return [],[]
@@ -60,15 +60,16 @@ def fileinfo_save(domain,set_data,file_list):
 def script_save(domain,url):
     f = open('script_sub_db.pickle', 'rb')
     save_data = dict()
+
     while 1:
         try:
             u = pickle.load(f)
             if len(dict(u)[list(dict(u).keys())[0]]) == 0:
                 continue
             save_data[list(dict(u).keys())[0]] = list(set(list(dict(u)[list(dict(u).keys())[0]])))
-        except EOFError:
+        except IndexError and EOFError:
             break
-    save_data[str(url)] = list()
+    save_data[str(url)] = [' ']
     with open(str(domain) + '_script.json', 'w+', encoding="utf-8") as f:
         json.dump(save_data,f,ensure_ascii=False, indent="\t")
 
