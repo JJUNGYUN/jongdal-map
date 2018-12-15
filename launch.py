@@ -28,7 +28,7 @@ if __name__ == '__main__':
             script_crawler(url_list, working_count)
 
             file_manage.fileinfo_save(list(url_list.keys())[0], set_data, file_list)
-            file_manage.script_save(list(url_list.keys())[0])
+            file_manage.script_save(list(url_list.keys())[0], url_list[list(url_list.keys())[0]]['url'])
             file_manage.sub_db_to_json(list(url_list.keys())[0], url_list, working_count)
 
 

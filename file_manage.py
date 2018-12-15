@@ -57,7 +57,7 @@ def fileinfo_save(domain,set_data,file_list):
         json.dump(set_save_data(url_file_list,set_data,file_list),f,ensure_ascii=False, indent="\t")
 
 
-def script_save(domain):
+def script_save(domain,url):
     f = open('script_sub_db.pickle', 'rb')
     save_data = dict()
     while 1:
@@ -68,9 +68,10 @@ def script_save(domain):
             save_data[list(dict(u).keys())[0]] = list(set(list(dict(u)[list(dict(u).keys())[0]])))
         except EOFError:
             break
-
+    save_data[str(url)] = list()
     with open(str(domain) + '_script.json', 'w+', encoding="utf-8") as f:
         json.dump(save_data,f,ensure_ascii=False, indent="\t")
+
 
 
 def set_save_data(data,set_data,file_list):
