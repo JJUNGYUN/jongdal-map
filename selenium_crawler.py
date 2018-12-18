@@ -99,7 +99,7 @@ def script_crawler(url_list,working_count):
     script_list = Manager().list()
     for cnt in range(len(urls)):
         if q.qsize() > 10:
-            processes = process_starter(processes)
+            process_starter(processes)
             while True:
                 for i in processes:
                     if not i.is_alive():

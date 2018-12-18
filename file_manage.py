@@ -67,7 +67,8 @@ def script_save(domain,url):
             if len(dict(u)[list(dict(u).keys())[0]]) == 0:
                 continue
             save_data[list(dict(u).keys())[0]] = list(set(list(dict(u)[list(dict(u).keys())[0]])))
-        except IndexError and EOFError:
+        except Exception as e:
+            print(e)
             break
     save_data[str(url)] = [' ']
     with open(str(domain) + '_script.json', 'w+', encoding="utf-8") as f:
@@ -77,8 +78,8 @@ def script_save(domain,url):
 
 def set_save_data(data,set_data,file_list):
     for i in data:
-        if i["fileUrl"] not in file_list:
-            file_list.append(i["fileUrl"])
+        if i["fileSrc"] not in file_list:
+            file_list.append(i["fileSrc"])
             set_data.append(i)
 
     return set_data

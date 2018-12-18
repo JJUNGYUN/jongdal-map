@@ -137,7 +137,7 @@ def data_parser(fileurl, introurl, domain):
         ftype = "pppt"
     else:
         ftype = "ERROR"
-    urllib.parse.quote_plus(str(i))
+
     file_default = {
         "host": domain,
         "fileType": ftype,
@@ -182,7 +182,7 @@ def parsing_url(parse_url, parsed_url_list, file_url_list, url_list,q, working_c
                 try:
                     if i['href'][0] == '/' and (list(url_list.keys())[0] in parse_url):
                         if not contact(i['href']):
-                            file_url_list.append(data_parser(url_list[list(url_list.keys())[0]]['url']+i['href'],parse_url, list(url_list.keys())[0]))
+                            file_url_list.append(data_parser(url_list[list(url_list.keys())[0]]['url']+i['href'][1:],parse_url, list(url_list.keys())[0]))
                         parsed_url_list.append(url_list[list(url_list.keys())[0]]['url']+i['href'][1:])
                     elif (list(url_list.keys())[0] in i['href']) and (i not in url_list[list(url_list.keys())[0]]['documents']):
                         if not contact(i['href']):
